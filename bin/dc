@@ -1,1 +1,130 @@
 #!/usr/bin/env bash
+
+export REPOSITORY_NAME=$(basename `git rev-parse --show-toplevel`)
+
+if test -t 1; then
+    ncolors=$(tput colors)
+
+    if test -n "$ncolors" && test "$ncolors" -ge 8; then
+        BOLD="$(tput bold)"
+        YELLOW="$(tput setaf 3)"
+        GREEN="$(tput setaf 2)"
+        NC="$(tput sgr0)"
+    fi
+fi
+
+function display_help {
+    echo "dc CLI"
+    echo
+    echo "${YELLOW}Usage:${NC}" >&2
+    echo "  ${GREEN}dc [environment] COMMAND [options] [arguments]"${NC}
+    # echo
+    # echo "  ${GREEN}environment(default) == dev "${NC}
+    # echo "  ${GREEN}dc COMMAND ...${NC}           develop"
+    # echo "  ${GREEN}dc test COMMAND ...${NC}      test"
+    # echo "  ${GREEN}dc prod COMMAND ...${NC}      production"
+    echo
+    echo "Unknown commands are passed to the docker-compose binary."
+    echo
+    echo "${YELLOW}docker-compose Commands:${NC}"
+    echo "  ${GREEN}dc up${NC}        Start the application"
+    echo "  ${GREEN}dc up -d${NC}     Start the application in the background"
+    echo "  ${GREEN}dc stop${NC}      Stop the application"
+    echo "  ${GREEN}dc restart${NC}   Restart the application"
+    echo "  ${GREEN}dc ps${NC}        Display the status of all containers"
+    echo
+    echo "${YELLOW}Container CLI:${NC}"
+    echo "  ${GREEN}dc shell client${NC}        Start a shell session within the application container"
+    echo
+    echo "${YELLOW}Scripts:${NC}"
+    echo "  ${GREEN}dc env${NC}   Copy .env.dev to .env"
+    echo
+
+    exit 1
+}
+
+if [ $# -gt 0 ]; then
+    if [ "$1" == "help" ] || [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "--help" ]; then
+        display_help
+    fi
+else
+    display_help
+fi
+
+if [ -f ./client/src/.env ]; then
+  source ./client/src/.env;
+else
+  CLIENT_PORT=3000
+fi
+
+export USERID=${UID}
+export CLIENT_PORT=${CLIENT_PORT}
+
+function dc_is_not_running {
+    echo "${BOLD}dc is not running.${NC}" >&2
+    echo "" >&2
+    echo "${BOLD}You may dc using the following command:${NC} './bin/dc up'" >&2
+
+    exit 1
+}
+
+docker-compose &> /dev/null
+if [ $? == 0 ]; then
+    DOCKER_COMPOSE=(docker-compose)
+else
+    DOCKER_COMPOSE=(docker compose)
+fi
+
+# ENV=dev
+
+# if [ "$1" == "test" ]; then
+#   shift 1
+#   DOCKER_COMPOSE+=(-f "docker-compose-test.yml")
+#   ENV=test
+# fi
+
+# if [ "$1" == "prod" ]; then
+#   shift 1
+#   DOCKER_COMPOSE+=(-f "docker-compose-prod.yml")
+#   ENV=prod
+# fi
+
+EXEC="yes"
+
+if ! docker info > /dev/null 2>&1; then
+    echo "${BOLD}Docker is not running.${NC}" >&2
+
+    exit 1
+fi
+
+if "${DOCKER_COMPOSE[@]}" ps -a 2>&1 | grep 'Exit\|exited'; then
+    echo "${BOLD}Shutting down old dc processes...${NC}" >&2
+
+    "${DOCKER_COMPOSE[@]}" down > /dev/null 2>&1
+
+    EXEC="no"
+elif [ -z "$("${DOCKER_COMPOSE[@]}" ps -q)" ]; then
+    EXEC="no"
+fi
+
+ARGS=()
+
+if [ "$1" == "shell" ]; then
+    shift 1
+
+    if [ "$EXEC" == "yes" ]; then
+        ARGS+=(exec -it)
+        [ ! -t 0 ] && ARGS+=(-T)
+        ARGS+=("client" sh)
+    else
+        dc_is_not_running
+    fi
+
+elif [ "$1" == "env" ]; then
+    cp ./client/src/.env.dev ./client/src/.env
+    exit
+else
+    ARGS+=("$@")
+fi
+
+"${DOCKER_COMPOSE[@]}" "${ARGS[@]}"
