@@ -1,5 +1,5 @@
 {
-  "name": "client",
+  "name": "@rah-emil/client",
   "private": true,
   "type": "module",
   "scripts": {
