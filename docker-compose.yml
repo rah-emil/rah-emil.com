@@ -12,6 +12,8 @@ services:
       - './client/src/:/app'
     ports:
       - "${CLIENT_PORT}:${CLIENT_PORT}"
+    depends_on:
+      - api
 
   cp:
     build:
@@ -23,6 +25,22 @@ services:
       - './cp/src/:/app'
     ports:
       - "${CP_PORT}:${CP_PORT}"
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    image: "${REPOSITORY_NAME}_api"
+    container_name: "${REPOSITORY_NAME}_api"
+    volumes:
+      - './api/src/:/app'
+    ports:
+      - "${API_PORT}:80"
+    depends_on:
+      - mysql
+      - redis
 
   mysql:
     image: 'mysql/mysql-server:8.0'
