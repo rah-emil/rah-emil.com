@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "env.d.ts",
+    "src/**/*",
+    "src/**/*.vue",
+    ".eslintrc.cjs",
+    "vite.config.*",
+    "vitest.config.*",
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
+}
