@@ -36,6 +36,7 @@ function display_help {
     echo "${YELLOW}Container CLI:${NC}"
     echo "  ${GREEN}dc shell client${NC}        Start a shell session within the application container"
     echo "  ${GREEN}dc shell cp${NC}            Start a shell session within the application container"
+    echo "  ${GREEN}dc shell api${NC}           Start a shell session within the application container"
     echo
     echo "${YELLOW}Scripts:${NC}"
     echo "  ${GREEN}dc env${NC}   Copy .env.dev to .env"
@@ -55,18 +56,32 @@ fi
 if [ -f ./client/src/.env ]; then
   source ./client/src/.env;
 else
-  CLIENT_PORT=3000
+  CLIENT_PORT=3001
 fi
 
 if [ -f ./cp/src/.env ]; then
   source ./cp/src/.env;
 else
-  CP_PORT=3001
+  CP_PORT=3002
+fi
+
+if [ -f ./api/src/.env ]; then
+  source ./api/src/.env;
+else
+  API_PORT=80
 fi
 
 export USERID=${UID}
+
 export CLIENT_PORT=${CLIENT_PORT}
+
 export CP_PORT=${CP_PORT}
+
+export API_PORT=${API_PORT}
+export DB_PORT=${DB_PORT}
+export DB_DATABASE=${DB_DATABASE}
+export DB_USERNAME=${DB_USERNAME}
+export DB_PASSWORD=${DB_PASSWORD}
 
 function dc_is_not_running {
     echo "${BOLD}dc is not running.${NC}" >&2

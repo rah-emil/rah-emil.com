@@ -23,3 +23,29 @@ services:
       - './cp/src/:/app'
     ports:
       - "${CP_PORT}:${CP_PORT}"
+
+  mysql:
+    image: 'mysql/mysql-server:8.0'
+    ports:
+      - "${DB_PORT}:3306"
+    container_name: "${REPOSITORY_NAME}_mysql"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: "${DB_DATABASE}"
+      MYSQL_USER: "${DB_USERNAME}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+    volumes:
+      - 'api-mysql:/var/lib/mysql'
+
+  redis:
+    image: 'redis:alpine'
+    container_name: "${REPOSITORY_NAME}_redis"
+    volumes:
+      - 'api-redis:/data'
+
+volumes:
+  api-mysql:
+    driver: local
+  api-redis:
+    driver: local
